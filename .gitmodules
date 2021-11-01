@@ -5,6 +5,8 @@
 [submodule "src/raisim_examples"]
 	path = src/raisim_examples
 	url = https://github.com/perchess/raisim_pkgs
+	branch = master
 [submodule "src/quadruped_ctrl"]
 	path = src/quadruped_ctrl
 	url = https://github.com/perchess/quadruped_ctrl
+	branch = master
