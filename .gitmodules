@@ -1,6 +1,7 @@
 [submodule "src/raisim_ros"]
 	path = src/raisim_ros
 	url = https://github.com/perchess/raisim_ros
+	branch = master
 [submodule "src/raisim_examples"]
 	path = src/raisim_examples
 	url = https://github.com/perchess/raisim_pkgs
