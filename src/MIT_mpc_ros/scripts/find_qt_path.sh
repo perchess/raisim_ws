@@ -1,6 +1,6 @@
 #/bin/bash
+# It doesn't work!!!!
+QT_VER="$(qtchooser -print-env |tail -1| cut -d/ -f2-6)"
 
-QT_VER="$(ls ~/Qt/ | grep 5 -m1)"
-
-printf "${HOME}/Qt/${QT_VER}/gcc_64/"
+printf "/${QT_VER}"
 
