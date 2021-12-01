@@ -44,7 +44,7 @@
     <xacro:property name="thigh_min" value="-60"/>
     <xacro:property name="thigh_velocity_max" value="21"/>
     <xacro:property name="thigh_torque_max" value="33.5"/>
-    <xacro:property name="calf_max" value="154.5"/>
+    <xacro:property name="calf_max" value="-52.5"/>
     <xacro:property name="calf_min" value="-154.5"/>
     <xacro:property name="calf_velocity_max" value="21"/>
     <xacro:property name="calf_torque_max" value="33.5"/>

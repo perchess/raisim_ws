@@ -37,7 +37,7 @@
                 <geometry>
                     <mesh filename="package://a1_description/meshes/hip.dae" scale="1 1 1"/>
                 </geometry>
-                <!-- <material name="orange"/> -->
+<!--                <material name="orange"/>-->
             </visual>
             <collision>
                 <origin rpy="${PI/2.0} 0 0" xyz="0 0 0"/>
@@ -75,7 +75,7 @@
             <origin rpy="0 0 0" xyz="0 ${thigh_offset*mirror} 0"/>
             <parent link="${name}_hip"/>
             <child link="${name}_thigh"/>
-            <axis xyz="0 -1 0"/>
+            <axis xyz="0 1 0"/>
             <dynamics damping="${damping}" friction="${friction}"/>
             <limit effort="${thigh_torque_max}" velocity="${thigh_velocity_max}" lower="${thigh_min*PI/180.0}" upper="${thigh_max*PI/180.0}"/>
         </joint>
@@ -91,7 +91,7 @@
                         <mesh filename="package://a1_description/meshes/thigh_mirror.dae" scale="1 1 1"/>
                     </xacro:if>
                 </geometry>
-                <!-- <material name="orange"/> -->
+<!--                <material name="orange"/>-->
             </visual>
             <collision>
                 <origin rpy="0 ${PI/2.0} 0" xyz="0 0 ${-thigh_length/2.0}"/>
@@ -113,7 +113,7 @@
             <origin rpy="0 0 0" xyz="0 0 ${-thigh_length}"/>
             <parent link="${name}_thigh"/>
             <child link="${name}_calf"/>
-            <axis xyz="0 -1 0"/>
+            <axis xyz="0 1 0"/>
             <dynamics damping="${damping}" friction="${friction}"/>
             <limit effort="${calf_torque_max}" velocity="${calf_velocity_max}" lower="${calf_min*PI/180.0}" upper="${calf_max*PI/180.0}"/>
         </joint>
@@ -124,7 +124,7 @@
                 <geometry>
                     <mesh filename="package://a1_description/meshes/calf.dae" scale="1 1 1"/>
                 </geometry>
-                <!-- <material name="orange"/> -->
+<!--                <material name="orange"/>-->
             </visual>
             <collision>
                 <origin rpy="0 ${PI/2.0} 0" xyz="0 0 ${-calf_length/2.0}"/>
@@ -154,7 +154,7 @@
                 <geometry>
                     <sphere radius="${foot_radius-0.01}"/>
                 </geometry>
-                <!-- <material name="orange"/> -->
+<!--                <material name="orange"/>-->
             </visual>
             <collision>
                 <origin rpy="0 0 0" xyz="0 0 0"/>
