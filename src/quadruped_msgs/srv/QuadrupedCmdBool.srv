@@ -1,0 +1,4 @@
+int16 cmd
+---
+bool result				#true - success :false - error
+string description      #relative description
