@@ -8,11 +8,14 @@ find_package(catkin REQUIRED
   roscpp
   gazebo_ros
   trajectory_msgs
+  unitree_legged_msgs
   COMPONENTS)
 
 catkin_package(
   INCLUDE_DIRS
   LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS
+  unitree_legged_msgs
 )
 
 if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")

@@ -18,6 +18,7 @@
 #include "Controllers/LegController.h"
 #include "Dynamics/Quadruped.h"
 #include "JPosInitializer.h"
+#include <ros/ros.h>
 
 #include "SimUtilities/GamepadCommand.h"
 #include "SimUtilities/VisualizationData.h"
@@ -26,12 +27,14 @@
 #include "state_estimator_lcmt.hpp"
 #include "RobotController.h"
 #include <lcm-cpp.hpp>
+#include <unitree_legged_msgs/LowCmd.h>
 
-class RobotRunner : public PeriodicTask {
+class RobotRunner : public PeriodicTask
+{
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  RobotRunner(RobotController* , PeriodicTaskManager*, float, std::string);
+  RobotRunner(RobotController*, PeriodicTaskManager*, float, std::string);
   using PeriodicTask::PeriodicTask;
   void init() override;
   void run() override;
@@ -76,6 +79,38 @@ class RobotRunner : public PeriodicTask {
   state_estimator_lcmt state_estimator_lcm;
   leg_control_data_lcmt leg_control_data_lcm;
   // Contact Estimator to calculate estimated forces and contacts
+
+//  unitree_legged_msgs::LowCmd low_cmd;
+
+  const unsigned char _HIGHLEVEL = 0x00;
+  const unsigned char _LOWLEVEL  = 0xff;
+
+  const double _PosStopF = (2.146E+9f);
+  const double _VelStopF = (16000.0f);
+
+//  float Kp = 1;
+//  float Kd = 1;
+
+//  struct Joint
+//  {
+//    float q = {0};
+//    float dq = {0};
+//    float q_d = {0};
+//    float q_init = {0};
+//    float dq_d = {0};
+//    float tau = {0};
+//  } _joint[12];
+
+//  struct Body
+//  {
+//    float gyro[3] = {0};
+//    float acc[3] = {0};
+//    float quat[4] = {0};
+//  }_body;
+
+  ros::NodeHandle _n;
+  ros::Subscriber _sub_low_state;
+  ros::Publisher _pub_low_cmd;
 
   FloatingBaseModel<float> _model;
   u64 _iterations = 0;

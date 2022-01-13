@@ -63,6 +63,20 @@
         </inertial>
     </link>
 
+    <joint name="depth_joint" type="fixed">
+        <origin rpy="${3*PI/4} 0 ${PI/2}" xyz="${trunk_length} 0 0"/>
+        <parent link="trunk"/>
+        <child link="depth_link"/>
+    </joint>
+    <link name="depth_link">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://a1_description/meshes/d435.dae" scale="1 1 1"/>
+            </geometry>
+        </visual>
+    </link>
+
     <xacro:if value="${(rolloverProtection == 'true')}">
         <joint name="stick_joint" type="fixed">
             <parent link="trunk"/>
