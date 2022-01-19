@@ -315,7 +315,7 @@
     </inertial>
   </link>
   <joint name="depth_joint" type="fixed">
-    <origin rpy="0 0.6283185307179586 0" xyz="0.267 0 0"/>
+    <origin rpy="0 1.5707963267948966 0" xyz="0.267 0 0"/>
     <parent link="trunk"/>
     <child link="depth_link"/>
   </joint>
