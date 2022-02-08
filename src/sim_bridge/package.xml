@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>sim_bridge</name>
+  <version>0.0.1</version>
+  <description>Project description</description>
+
+  <maintainer email="denis.sokolov48@gmail.com">Sokolov Denis</maintainer>
+  <author email="denis.sokolov48@gmail.com">Sokolov Denis</author>
+  <url type="website">http://bitbucket.org/jhwangbo/raiSim</url>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+  <depend>geometry_msgs</depend>
+  <depend>message_runtime</depend>
+<!--  <depend>dynamic_reconfigure</depend>-->
+  <depend>raisim</depend>
+  <depend>quadruped_msgs</depend>
+  <depend>quadruped_ctrl</depend>
+  <depend>eigen3</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>std_msgs</depend>
+</package>

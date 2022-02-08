@@ -1,0 +1,12 @@
+<launch>
+<!--    Launch parsing xacro to urdf-->
+    <node pkg="xacro" type="xacro" name="generate_urdf"
+    args="$(find a1_description)/xacro/robot.xacro
+    -o $(find a1_description)/urdf/a1.urdf DEBUG:=false"/>
+<!--    Launch controller with delay to have time to convert urdf-->
+    <node pkg="sim_bridge" type="minicheetah" name="unitree_a1_mpc" output="screen"
+    launch-prefix="bash -c 'sleep 1.0; $0 $@' ">
+        <param name="urdf_path" value="$(find a1_description)/urdf/a1.urdf"/>
+    </node>
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="reconfigure" output="screen"/>
+</launch>
