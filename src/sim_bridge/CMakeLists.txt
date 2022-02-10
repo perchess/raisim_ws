@@ -34,7 +34,7 @@ include_directories (
 set (minicheetah_src
     src/ros_controller.cpp
     src/minicheetah.cpp
-    include/ros_controller.h )
+    include/sim_bridge/ros_controller.h )
 add_executable(minicheetah ${minicheetah_src})
 target_link_libraries(minicheetah PUBLIC pthread ${catkin_LIBRARIES} Eigen3::Eigen)
 

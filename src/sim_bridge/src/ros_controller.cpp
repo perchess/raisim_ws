@@ -1,4 +1,4 @@
-#include <ros_controller.h>
+#include <sim_bridge/ros_controller.h>
 
 
 MPCControllerRos::MPCControllerRos(double freq)
@@ -8,9 +8,9 @@ MPCControllerRos::MPCControllerRos(double freq)
   , scanDim2_(20)
   , buffer_size_(2000)
   , scans_counter_(0)
-  , good_pts_(buffer_size_)
+  , good_pts_{std::make_shared<boost::circular_buffer<Eigen::Vector3d>>(10000)}
   , visuals_buffer_(buffer_size_/2)
-  , scans_pts_buffer_(buffer_size_)
+  , scans_pts_buffer_{std::make_shared<boost::circular_buffer<Eigen::Vector3d>>(buffer_size_)}
   //  , nh_("~")
 {
   readParam<std::string>("~urdf_path", urdf_path_, "/home/den/catkin_workspaces/raisim_common/raisim_ros/src/a1_description/urdf/a1.urdf");
@@ -26,7 +26,7 @@ MPCControllerRos::MPCControllerRos(double freq)
   df_callback_type = boost::bind(&MPCControllerRos::dynamicReconfigureCallback, this, _1, _2);
   df_server.setCallback(df_callback_type);
   effort_pub_ = nh_.advertise<unitree_legged_msgs::LowState>("effort_raisim",1);
-
+  controller_->getConvexMpcPtr()->setPointsBuffer(good_pts_);
 }
 
 MPCControllerRos::~MPCControllerRos()
@@ -110,14 +110,14 @@ void MPCControllerRos::raisimSetup()
   // Вспомогательные маркеры
   raisim_server_->addVisualSphere("pfinal", 0.05, 1, 0, 0);
   raisim_server_->getVisualObject("pfinal")->setColor(1,1,0,1);
-  raisim_server_->addVisualSphere("pstart", 0.05, 1, 0, 0);
-  raisim_server_->getVisualObject("pstart")->setColor(0,1,0,1);
-  raisim_server_->addVisualSphere("pcur", 0.05, 1, 0, 0);
-  raisim_server_->getVisualObject("pcur")->setColor(1,1,1,1);
-  raisim_server_->addVisualSphere("foot_FR_ground_truth", 0.05, 1, 0, 0);
-  raisim_server_->getVisualObject("foot_FR_ground_truth")->setColor(1,1,.5,1);
-  raisim_server_->addVisualSphere("pf_FR_est", 0.05, 1, 0, 0);
-  raisim_server_->getVisualObject("pf_FR_est")->setColor(1,0,0,1);
+//  raisim_server_->addVisualSphere("pstart", 0.05, 1, 0, 0);
+//  raisim_server_->getVisualObject("pstart")->setColor(0,1,0,1);
+//  raisim_server_->addVisualSphere("pcur", 0.05, 1, 0, 0);
+//  raisim_server_->getVisualObject("pcur")->setColor(1,1,1,1);
+//  raisim_server_->addVisualSphere("foot_FR_ground_truth", 0.05, 1, 0, 0);
+//  raisim_server_->getVisualObject("foot_FR_ground_truth")->setColor(1,1,.5,1);
+//  raisim_server_->addVisualSphere("pf_FR_est", 0.05, 1, 0, 0);
+//  raisim_server_->getVisualObject("pf_FR_est")->setColor(1,0,0,1);
 }
 
 void MPCControllerRos::preWork()
@@ -191,7 +191,7 @@ void MPCControllerRos::spin()
   ros::spinOnce();
   std::this_thread::sleep_for(std::chrono::microseconds(long(world_.getTimeStep() * 1000000)));
   raisim_server_->integrateWorldThreadSafe();
-//  depthSensorWork();
+//  depthSensorWork(); ушло в таймер
   robot_->getState(q_, qd_);
   a1_feedback(q_, qd_);
   updateFeedback();
@@ -202,13 +202,13 @@ void MPCControllerRos::spin()
   robot_->setGeneralizedForce(generalizedFrorce_);
   prev_q_ = q_;
   prev_qd_ = qd_;
-  controller_->SetRobotVel(twist_.linear.x, twist_.linear.y, twist_.angular.z);
   drawVisual();
 }
 
 void MPCControllerRos::cmdVelCallback(const geometry_msgs::TwistConstPtr &msg)
 {
   twist_ = *msg;
+  controller_->SetRobotVel(twist_.linear.x, twist_.linear.y, twist_.angular.z);
 }
 
 bool MPCControllerRos::srvSetMode(quadruped_ctrl::QuadrupedCmdBoolRequest &req,
@@ -340,9 +340,9 @@ void MPCControllerRos::depthSensorWork(const ros::TimerEvent& event)
       auto &col = world_.rayTest(lidarPos.e(), rayDirection, 5);
       if (col.size() > 0)
       {
-        if (canPlace(col[0].getPosition()))
+        if (canPlace(col[0].getPosition(), *scans_pts_buffer_))
         {
-          scans_pts_buffer_.push_back(col[0].getPosition());
+          scans_pts_buffer_->push_back(col[0].getPosition());
           visuals_buffer_.at(scans_counter_)->setPosition(col[0].getPosition());
         }
       }
@@ -368,7 +368,8 @@ void MPCControllerRos::depthSensorWork(const ros::TimerEvent& event)
     else
     {
       it->setColor(1,0,0,1);
-      good_pts_.push_back(it->getPosition());
+      if (canPlace(it->getPosition(), *good_pts_))
+        good_pts_->push_back(it->getPosition());
     }
   }
 
@@ -382,28 +383,28 @@ void  MPCControllerRos::drawVisual()
   raisim::Vec<3> FR_foot_pose;
   robot_->getFramePosition("FR_foot_fixed", FR_foot_pose);
 
-  Vec3<float> pf_FR = controller_->getConvexMpcPtr()->getFootTrajVect()[0].getFinalPosition();
+  Vec3<float> pf_FR = controller_->Pf_;
   Vec3<float> p0_FR = controller_->getConvexMpcPtr()->getFootTrajVect()[0].getStartPosition();
   Vec3<float> pcur_FR = controller_->getConvexMpcPtr()->getFootTrajVect()[0].getPosition();
   Vec3<float> step_len_FR = controller_->getConvexMpcPtr()->getFootTrajVect()[0].getStepLength();
   Vec3<double> pf_fr_estimated(FR_foot_pose.e().x() + step_len_FR.x(),
                                FR_foot_pose.e().y() + step_len_FR.y(),
-                               good_pts_.front().z());
+                               good_pts_->front().z());
 
 //  std::cout << "step len x: " << step_len_FR.x() <<  "step len y: " << step_len_FR.y() << std::endl;
 
-  raisim_server_->getVisualObject("pfinal")->setPosition(pf_FR.x(),pf_FR.y(),good_pts_.front().z());
-  raisim_server_->getVisualObject("pstart")->setPosition(p0_FR.x(),p0_FR.y(),good_pts_.front().z());
+  raisim_server_->getVisualObject("pfinal")->setPosition(pf_FR.x(),pf_FR.y(),pf_FR.z());
+//  raisim_server_->getVisualObject("pstart")->setPosition(p0_FR.x(),p0_FR.y(),good_pts_->front().z());
 
-  raisim_server_->getVisualObject("pcur")->setPosition(pcur_FR.x(),pcur_FR.y(),good_pts_.front().z());
+//  raisim_server_->getVisualObject("pcur")->setPosition(pcur_FR.x(),pcur_FR.y(),good_pts_->front().z());
 
-  raisim_server_->getVisualObject("foot_FR_ground_truth")->setPosition(FR_foot_pose.e().x(),
-                                                          FR_foot_pose.e().y(),
-                                                          FR_foot_pose.e().z());
+//  raisim_server_->getVisualObject("foot_FR_ground_truth")->setPosition(FR_foot_pose.e().x(),
+//                                                          FR_foot_pose.e().y(),
+//                                                          FR_foot_pose.e().z());
 
-  raisim_server_->getVisualObject("pf_FR_est")->setPosition(pf_fr_estimated.x(),
-                                                            pf_fr_estimated.y(),
-                                                            pf_fr_estimated.z());
+//  raisim_server_->getVisualObject("pf_FR_est")->setPosition(pf_fr_estimated.x(),
+//                                                            pf_fr_estimated.y(),
+//                                                            pf_fr_estimated.z());
 
   ///
   /// PROCESSING
@@ -446,9 +447,9 @@ double avgBufferVisuals(boost::circular_buffer<raisim::Visuals *> const& v) {
 }
 
 
-double avgBufferPoints(boost::circular_buffer<Eigen::Vector3d> const& v) {
-  return 1.0 * std::accumulate(v.begin(), v.end(), 0.0,
-                               [&](double a, Eigen::Vector3d b){return a + b.z(); }) / v.size();
+double avgBufferPoints(std::shared_ptr<boost::circular_buffer<Eigen::Vector3d>> const& v) {
+  return 1.0 * std::accumulate(v->begin(), v->end(), 0.0,
+                               [&](double a, Eigen::Vector3d b){return a + b.z(); }) / v->size();
 }
 
 double calcDistance(Vec3<float> const& pf, Eigen::Vector3d const& point)
@@ -471,13 +472,32 @@ double MPCControllerRos::calcMinDistance(Vec3<float> const& pf)
 {
   double dist = 9999;
   double cur_dist = 0;
-  for (auto it:good_pts_)
+  for (auto it:*good_pts_)
   {
     cur_dist = calcDistance(pf, it);
     if (cur_dist < dist)
       dist = cur_dist;
   }
   return dist;
+}
+
+
+const Eigen::Vector3d MPCControllerRos::findClosestPoint(const Eigen::Vector3d& point,
+                                                         std::shared_ptr<boost::circular_buffer<Eigen::Vector3d>>& buffer)
+{
+  double dist = 9999;
+  double cur_dist = 0;
+  Eigen::Vector3d ans = buffer->front();
+  for (auto it:*buffer)
+  {
+    cur_dist = calcDistance(point, it);
+    if (cur_dist < dist)
+    {
+      dist = cur_dist;
+      ans = it;
+    }
+  }
+  return ans;
 }
 
 
@@ -499,10 +519,11 @@ const Eigen::Vector3d MPCControllerRos::findClosestPoint(const Eigen::Vector3d& 
   return ans;
 }
 
-bool MPCControllerRos::canPlace(const Eigen::Vector3d& point)
+bool MPCControllerRos::canPlace(const Eigen::Vector3d& point,
+                                boost::circular_buffer<Eigen::Vector3d>& buffer)
 {
-  static double thresh = 0.01; // метр
-  auto closest = findClosestPoint(point, scans_pts_buffer_);
+  static double thresh = 0.005; // метр
+  auto closest = findClosestPoint(point, buffer);
 //  std::cout << "distance = " << calcDistance(point, closest) << std::endl;
   if (calcDistance(point, closest) >= thresh)
     return true;

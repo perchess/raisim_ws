@@ -51,9 +51,14 @@ public:
   void depthSensorWork(const ros::TimerEvent& event);
   void drawVisual();
   double calcMinDistance(Vec3<float> const& pf);
-  const Eigen::Vector3d findClosestPoint(const Eigen::Vector3d& point, boost::circular_buffer<Eigen::Vector3d>& buffer);
+  const Eigen::Vector3d findClosestPoint(const Eigen::Vector3d& point,
+                                         std::shared_ptr<boost::circular_buffer<Eigen::Vector3d>>& buffer);
+  const Eigen::Vector3d findClosestPoint(const Eigen::Vector3d& point,
+                                                           boost::circular_buffer<Eigen::Vector3d>& buffer);
+
   // Стоит ли добавлять точку в буфер?
-  bool canPlace(const Eigen::Vector3d& point);
+  bool canPlace(const Eigen::Vector3d& point,
+                                  boost::circular_buffer<Eigen::Vector3d>& buffer);
 
 private:
   ros::NodeHandle nh_;
@@ -86,9 +91,9 @@ private:
   int scanDim2_;
   size_t buffer_size_;
   uint16_t scans_counter_;
-  boost::circular_buffer<Eigen::Vector3d> good_pts_;
+  std::shared_ptr<boost::circular_buffer<Eigen::Vector3d>> good_pts_;
   boost::circular_buffer<raisim::Visuals *> visuals_buffer_;
-  boost::circular_buffer<Eigen::Vector3d> scans_pts_buffer_;
+  std::shared_ptr<boost::circular_buffer<Eigen::Vector3d>> scans_pts_buffer_;
 };
 
 //! @brief Шаблоннная функция для чтения параметров
@@ -115,7 +120,7 @@ double avgVector(std::vector<raisim::Visuals *> const& v);
 
 double avgBufferVisuals(boost::circular_buffer<raisim::Visuals *> const& v);
 
-double avgBufferPoints(boost::circular_buffer<Eigen::Vector3d> const& v);
+double avgBufferPoints(std::shared_ptr<boost::circular_buffer<Eigen::Vector3d>> const& v);
 
 double calcDistance(Vec3<float> const& pf, Eigen::Vector3d const&);
 
