@@ -9,7 +9,7 @@ MPCControllerRos::MPCControllerRos(double freq)
   , buffer_size_(2000)
   , scans_counter_(0)
   , good_pts_{std::make_shared<boost::circular_buffer<Eigen::Vector3d>>(10000)}
-  , visuals_buffer_(buffer_size_/2)
+  , visuals_buffer_(buffer_size_)
   , scans_pts_buffer_{std::make_shared<boost::circular_buffer<Eigen::Vector3d>>(buffer_size_)}
   //  , nh_("~")
 {

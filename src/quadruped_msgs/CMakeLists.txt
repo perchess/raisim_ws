@@ -16,6 +16,8 @@ generate_dynamic_reconfigure_options(
 add_message_files(
   FILES
     commandDes.msg
+    LegControllerCommand.msg
+    CMPC_Result.msg
 )
 
 add_service_files(
